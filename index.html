@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aarav Benchmark Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000000;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            width: 100%;
+        }
+        
+        .benchmark-title {
+            font-size: 2.5em;
+            font-weight: bold;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .mode-toggle {
+            display: flex;
+            background: #222;
+            border-radius: 25px;
+            padding: 5px;
+            gap: 5px;
+        }
+        
+        .toggle-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 20px;
+            background: transparent;
+            color: #888;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .toggle-btn.active {
+            background: #4ecdc4;
+            color: white;
+        }
+        
+        .amount-control {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: #222;
+            padding: 10px 20px;
+            border-radius: 25px;
+        }
+        
+        .amount-label {
+            color: #888;
+            font-weight: bold;
+        }
+        
+        .amount-input {
+            background: #333;
+            border: 2px solid #444;
+            color: #4ecdc4;
+            font-size: 1.2em;
+            font-weight: bold;
+            width: 120px;
+            padding: 8px 12px;
+            border-radius: 10px;
+            text-align: center;
+            outline: none;
+        }
+        
+        .amount-input:focus {
+            border-color: #4ecdc4;
+        }
+        
+        .main-content {
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+            justify-content: center;
+            width: 100%;
+            max-width: 1200px;
+        }
+        
+        .fps-container {
+            background: #111;
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #333;
+            min-width: 300px;
+            text-align: center;
+        }
+        
+        .fps-value {
+            font-size: 5em;
+            font-weight: bold;
+            color: #ff6b6b;
+            text-shadow: 0 0 30px rgba(255,107,107,0.5);
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+        
+        .fps-label {
+            font-size: 1.3em;
+            color: #888;
+        }
+        
+        .visualization {
+            background: #111;
+            border-radius: 15px;
+            border: 2px solid #333;
+            padding: 20px;
+            flex: 1;
+            max-width: 600px;
+        }
+        
+        .donut-container {
+            font-family: monospace;
+            font-size: 7px;
+            line-height: 7px;
+            text-align: center;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .gpu-container {
+            width: 100%;
+            height: 300px;
+            background: #000;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .instagram-handle {
+            font-size: 1.3em;
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+        
+        .surfux {
+            font-size: 0.9em;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .fps-container {
+                min-width: 250px;
+            }
+            
+            .fps-value {
+                font-size: 4em;
+            }
+            
+            .visualization {
+                max-width: 100%;
+            }
+            
+            .donut-container {
+                font-size: 5px;
+                line-height: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="benchmark-title">Aarav Benchmark Test</div>
+    </div>
+
+    <div class="controls">
+        <div class="mode-toggle">
+            <button class="toggle-btn active" onclick="switchMode('cpu')">CPU</button>
+            <button class="toggle-btn" onclick="switchMode('gpu')">GPU</button>
+        </div>
+        
+        <div class="amount-control">
+            <span class="amount-label">AMOUNT:</span>
+            <input type="number" class="amount-input" id="amountInput" value="1" min="1" onchange="updateAmount()">
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="fps-container">
+            <div class="fps-value" id="fpsCounter">0</div>
+            <div class="fps-label">FPS</div>
+        </div>
+        
+        <div class="visualization">
+            <div class="donut-container">
+                <pre id="donutOutput"></pre>
+            </div>
+            <canvas class="gpu-container" id="gpuCanvas" style="display: none;"></canvas>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="instagram-handle">Instra - @aarav_singh_latwal</div>
+        <div class="surfux">surfux</div>
+    </div>
+
+    <script>
+        let currentMode = 'cpu';
+        let isRunning = true;
+        let animationId = null;
+        let startTime = performance.now();
+        let frameCount = 0;
+        let fps = 0;
+        let lastFpsUpdate = startTime;
+        let amount = 1;
+
+        // DOM elements
+        const fpsCounter = document.getElementById('fpsCounter');
+        const donutOutput = document.getElementById('donutOutput');
+        const gpuCanvas = document.getElementById('gpuCanvas');
+        const amountInput = document.getElementById('amountInput');
+
+        function switchMode(mode) {
+            if (currentMode === mode) return;
+            
+            currentMode = mode;
+            
+            // Update toggle buttons
+            document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Show/hide visualization
+            if (mode === 'cpu') {
+                donutOutput.style.display = 'block';
+                gpuCanvas.style.display = 'none';
+            } else {
+                donutOutput.style.display = 'none';
+                gpuCanvas.style.display = 'block';
+            }
+            
+            // Reset and restart
+            resetBenchmark();
+            startBenchmark();
+        }
+
+        function updateAmount() {
+            let newAmount = parseInt(amountInput.value);
+            if (isNaN(newAmount) || newAmount < 1) {
+                newAmount = 1;
+            }
+            amount = newAmount;
+            amountInput.value = amount;
+            resetBenchmark();
+            startBenchmark();
+        }
+
+        function startBenchmark() {
+            if (isRunning) return;
+            
+            isRunning = true;
+            startTime = performance.now();
+            frameCount = 0;
+            lastFpsUpdate = startTime;
+            fps = 0;
+            
+            if (currentMode === 'cpu') {
+                startCPUBenchmark();
+            } else {
+                startGPUBenchmark();
+            }
+        }
+
+        function resetBenchmark() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+            isRunning = false;
+            frameCount = 0;
+            fps = 0;
+            fpsCounter.textContent = '0';
+        }
+
+        function startCPUBenchmark() {
+            let A = 0, B = 0;
+            
+            function renderCPU() {
+                if (!isRunning) return;
+                
+                const currentTime = performance.now();
+                frameCount++;
+                
+                // Update FPS counter every second
+                if (currentTime - lastFpsUpdate >= 1000) {
+                    fps = Math.round((frameCount * 1000) / (currentTime - lastFpsUpdate));
+                    lastFpsUpdate = currentTime;
+                    frameCount = 0;
+                    fpsCounter.textContent = fps;
+                }
+                
+                // Render multiple donuts based on amount
+                let output = '';
+                for (let i = 0; i < amount; i++) {
+                    output += renderDonutString(A + i * 0.5, B + i * 0.3) + '\n\n';
+                }
+                donutOutput.textContent = output;
+                
+                A += 0.06;
+                B += 0.03;
+                
+                animationId = requestAnimationFrame(renderCPU);
+            }
+            
+            renderCPU();
+        }
+
+        function startGPUBenchmark() {
+            const ctx = gpuCanvas.getContext('2d');
+            gpuCanvas.width = 560;
+            gpuCanvas.height = 300;
+            
+            let A = 0;
+            
+            function renderGPU() {
+                if (!isRunning) return;
+                
+                const currentTime = performance.now();
+                frameCount++;
+                
+                // Update FPS counter every second
+                if (currentTime - lastFpsUpdate >= 1000) {
+                    fps = Math.round((frameCount * 1000) / (currentTime - lastFpsUpdate));
+                    lastFpsUpdate = currentTime;
+                    frameCount = 0;
+                    fpsCounter.textContent = fps;
+                }
+                
+                // Clear canvas
+                ctx.fillStyle = 'black';
+                ctx.fillRect(0, 0, gpuCanvas.width, gpuCanvas.height);
+                
+                // Render complex 3D-like scene with multiple layers
+                A += 0.02;
+                
+                // Base complexity multiplier
+                const complexity = Math.max(1, amount);
+                
+                // Layer 1: Multiple rotating 3D cubes (rendering all faces)
+                for (let cube = 0; cube < complexity * 2; cube++) {
+                    const cubeSize = 20 + cube * 2;
+                    const cubeX = gpuCanvas.width / 2 + Math.cos(A + cube * 0.5) * 100;
+                    const cubeY = gpuCanvas.height / 2 + Math.sin(A + cube * 0.3) * 80;
+                    
+                    // Render all 6 faces of each cube (front, back, top, bottom, left, right)
+                    for (let face = 0; face < 6; face++) {
+                        ctx.save();
+                        ctx.translate(cubeX, cubeY);
+                        ctx.rotate(A + cube * 0.2);
+                        
+                        // Different colors for each face to ensure all are rendered
+                        ctx.fillStyle = `hsl(${(cube * 60 + face * 40 + A * 50) % 360}, 100%, ${50 + face * 5}%)`;
+                        
+                        // Draw each face as a filled rectangle
+                        switch(face) {
+                            case 0: // Front
+                                ctx.fillRect(-cubeSize/2, -cubeSize/2, cubeSize, cubeSize);
+                                break;
+                            case 1: // Back (offset to show it's behind)
+                                ctx.fillRect(-cubeSize/2 + 5, -cubeSize/2 + 5, cubeSize, cubeSize);
+                                break;
+                            case 2: // Top
+                                ctx.fillRect(-cubeSize/2, -cubeSize - 5, cubeSize, cubeSize);
+                                break;
+                            case 3: // Bottom
+                                ctx.fillRect(-cubeSize/2, cubeSize/2 + 5, cubeSize, cubeSize);
+                                break;
+                            case 4: // Left
+                                ctx.fillRect(-cubeSize - 5, -cubeSize/2, cubeSize, cubeSize);
+                                break;
+                            case 5: // Right
+                                ctx.fillRect(cubeSize/2 + 5, -cubeSize/2, cubeSize, cubeSize);
+                                break;
+                        }
+                        
+                        ctx.restore();
+                    }
+                }
+                
+                // Layer 2: Complex particle system with full rendering
+                const particleCount = complexity * 500;
+                for (let i = 0; i < particleCount; i++) {
+                    const angle = A + i * 0.01;
+                    const radius = 50 + Math.sin(angle * 2) * 30;
+                    const x = gpuCanvas.width / 2 + Math.cos(angle) * radius;
+                    const y = gpuCanvas.height / 2 + Math.sin(angle) * radius;
+                    
+                    // Draw each particle with multiple layers to increase GPU load
+                    for (let layer = 0; layer < 3; layer++) {
+                        const size = 2 + layer + Math.sin(angle + layer) * 1;
+                        ctx.beginPath();
+                        ctx.arc(x + layer * 2, y + layer * 2, size, 0, Math.PI * 2);
+                        ctx.fillStyle = `hsla(${(i * 3 + A * 100) % 360}, 100%, 60%, ${0.8 - layer * 0.2})`;
+                        ctx.fill();
+                    }
+                }
+                
+                // Layer 3: Multiple rotating complex shapes with gradients
+                for (let shape = 0; shape < complexity * 3; shape++) {
+                    const shapeX = gpuCanvas.width / 4 + Math.cos(A * 0.7 + shape) * 150;
+                    const shapeY = gpuCanvas.height * 3/4 + Math.sin(A * 0.5 + shape) * 100;
+                    
+                    ctx.save();
+                    ctx.translate(shapeX, shapeY);
+                    ctx.rotate(A + shape * 0.4);
+                    
+                    // Create complex gradient for each shape
+                    const gradient = ctx.createRadialGradient(0, 0, 5, 0, 0, 25);
+                    gradient.addColorStop(0, `hsl(${(shape * 40 + A * 30) % 360}, 100%, 70%)`);
+                    gradient.addColorStop(1, `hsl(${(shape * 40 + 180 + A * 30) % 360}, 100%, 30%)`);
+                    
+                    // Draw complex polygon with many points
+                    ctx.beginPath();
+                    const sides = 8 + shape % 5;
+                    for (let i = 0; i < sides; i++) {
+                        const angle = (i * 2 * Math.PI) / sides;
+                        const radius = 20 + Math.sin(A + i) * 5;
+                        const x = Math.cos(angle) * radius;
+                        const y = Math.sin(angle) * radius;
+                        if (i === 0) {
+                            ctx.moveTo(x, y);
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    }
+                    ctx.closePath();
+                    ctx.fillStyle = gradient;
+                    ctx.fill();
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    ctx.restore();
+                }
+                
+                // Layer 4: Background grid that's always fully rendered
+                const gridSize = 20;
+                for (let x = 0; x < gpuCanvas.width; x += gridSize) {
+                    for (let y = 0; y < gpuCanvas.height; y += gridSize) {
+                        ctx.strokeStyle = `hsla(${(x + y + A * 100) % 360}, 50%, 50%, 0.3)`;
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(x, y, gridSize, gridSize);
+                    }
+                }
+                
+                animationId = requestAnimationFrame(renderGPU);
+            }
+            
+            renderGPU();
+        }
+
+        function renderDonutString(a, b) {
+            const z = new Array(1760).fill(0);
+            const bArray = new Array(1760).fill(' ');
+            let output = '';
+            
+            for (let j = 0; j < 6.28; j += 0.07) {
+                for (let i = 0; i < 6.28; i += 0.02) {
+                    const c = Math.sin(i);
+                    const d = Math.cos(j);
+                    const e = Math.sin(a);
+                    const f = Math.sin(j);
+                    const g = Math.cos(a);
+                    const h = d + 2;
+                    const D = 1 / (c * h * e + f * g + 5);
+                    const l = Math.cos(i);
+                    const m = Math.cos(b);
+                    const n = Math.sin(b);
+                    const t = c * h * g - f * e;
+                    
+                    const x = Math.floor(40 + 30 * D * (l * h * m - t * n));
+                    const y = Math.floor(12 + 15 * D * (l * h * n + t * m));
+                    const o = x + 80 * y;
+                    
+                    const N = Math.floor(8 * ((f * e - c * d * g) * m - c * d * e - f * g - l * d * n));
+                    
+                    if (y < 22 && y > 0 && x > 0 && x < 80 && D > z[o]) {
+                        z[o] = D;
+                        bArray[o] = ".,-~:;=!*#$@"[N > 0 ? N : 0];
+                    }
+                }
+            }
+            
+            // Convert to string
+            for (let k = 0; k < 1761; k++) {
+                output += (k % 80 === 0) ? '\n' : bArray[k];
+            }
+            
+            return output;
+        }
+
+        // Initialize - Auto start CPU benchmark
+        window.addEventListener('load', () => {
+            startCPUBenchmark();
+        });
+
+        // Allow Enter key to update amount
+        amountInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                updateAmount();
+            }
+        });
+    </script>
+</body>
+</html>
