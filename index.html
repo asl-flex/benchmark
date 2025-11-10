@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta name="google-site-verification" content="aa_Uvu1GNbimlGDvef3nbIVwO2oqetkXFegRZHG6tpE" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aarav Benchmark Test</title>
@@ -333,10 +332,14 @@
                     fpsCounter.textContent = fps;
                 }
                 
-                // Render multiple donuts based on amount
+                // Render multiple donuts with increasing complexity
                 let output = '';
-                for (let i = 0; i < amount; i++) {
-                    output += renderDonutString(A + i * 0.5, B + i * 0.3) + '\n\n';
+                const intensity = Math.pow(amount, 1.5); // Exponential complexity
+                
+                for (let i = 0; i < Math.min(amount, 50); i++) {
+                    // Increase detail level for higher amounts
+                    const detailMultiplier = 1 + (intensity * 0.1);
+                    output += renderDonutString(A + i * 0.5, B + i * 0.3, detailMultiplier) + '\n\n';
                 }
                 donutOutput.textContent = output;
                 
@@ -355,6 +358,25 @@
             gpuCanvas.height = 300;
             
             let A = 0;
+            let particles = [];
+            
+            // Initialize particles
+            function initParticles() {
+                particles = [];
+                const particleCount = amount * 1000; // Much more particles
+                for (let i = 0; i < particleCount; i++) {
+                    particles.push({
+                        x: Math.random() * gpuCanvas.width,
+                        y: Math.random() * gpuCanvas.height,
+                        vx: (Math.random() - 0.5) * 4,
+                        vy: (Math.random() - 0.5) * 4,
+                        size: Math.random() * 3 + 1,
+                        life: Math.random() * 100
+                    });
+                }
+            }
+            
+            initParticles();
             
             function renderGPU() {
                 if (!isRunning) return;
@@ -370,120 +392,144 @@
                     fpsCounter.textContent = fps;
                 }
                 
-                // Clear canvas
-                ctx.fillStyle = 'black';
+                // Clear canvas with semi-transparent for trail effect
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
                 ctx.fillRect(0, 0, gpuCanvas.width, gpuCanvas.height);
                 
-                // Render complex 3D-like scene with multiple layers
                 A += 0.02;
+                const intensity = Math.pow(amount, 1.2);
                 
-                // Base complexity multiplier
-                const complexity = Math.max(1, amount);
-                
-                // Layer 1: Multiple rotating 3D cubes (rendering all faces)
-                for (let cube = 0; cube < complexity * 2; cube++) {
-                    const cubeSize = 20 + cube * 2;
-                    const cubeX = gpuCanvas.width / 2 + Math.cos(A + cube * 0.5) * 100;
-                    const cubeY = gpuCanvas.height / 2 + Math.sin(A + cube * 0.3) * 80;
+                // Layer 1: Intensive particle system
+                for (let i = 0; i < particles.length; i++) {
+                    const p = particles[i];
                     
-                    // Render all 6 faces of each cube (front, back, top, bottom, left, right)
+                    // Update particle physics
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.life--;
+                    
+                    // Bounce off walls
+                    if (p.x <= 0 || p.x >= gpuCanvas.width) p.vx *= -1;
+                    if (p.y <= 0 || p.y >= gpuCanvas.height) p.vy *= -1;
+                    
+                    // Wrap around
+                    if (p.x < 0) p.x = gpuCanvas.width;
+                    if (p.x > gpuCanvas.width) p.x = 0;
+                    if (p.y < 0) p.y = gpuCanvas.height;
+                    if (p.y > gpuCanvas.height) p.y = 0;
+                    
+                    // Respawn dead particles
+                    if (p.life <= 0) {
+                        p.x = Math.random() * gpuCanvas.width;
+                        p.y = Math.random() * gpuCanvas.height;
+                        p.life = 100;
+                    }
+                    
+                    // Draw particle with multiple layers
+                    for (let layer = 0; layer < 2; layer++) {
+                        const size = p.size + layer;
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
+                        ctx.fillStyle = `hsla(${(i * 0.1 + A * 50) % 360}, 100%, 60%, ${0.8 - layer * 0.3})`;
+                        ctx.fill();
+                    }
+                }
+                
+                // Layer 2: Multiple 3D rotating cubes with all faces
+                const cubeCount = Math.min(amount * 5, 100);
+                for (let cube = 0; cube < cubeCount; cube++) {
+                    const cubeSize = 15 + (cube % 10);
+                    const cubeX = gpuCanvas.width / 2 + Math.cos(A + cube * 0.3) * (80 + cube * 2);
+                    const cubeY = gpuCanvas.height / 2 + Math.sin(A + cube * 0.4) * (60 + cube * 2);
+                    
+                    // Render all 6 faces with different colors
                     for (let face = 0; face < 6; face++) {
                         ctx.save();
                         ctx.translate(cubeX, cubeY);
                         ctx.rotate(A + cube * 0.2);
                         
-                        // Different colors for each face to ensure all are rendered
-                        ctx.fillStyle = `hsl(${(cube * 60 + face * 40 + A * 50) % 360}, 100%, ${50 + face * 5}%)`;
+                        const hue = (cube * 30 + face * 60 + A * 40) % 360;
+                        ctx.fillStyle = `hsl(${hue}, 80%, ${50 - face * 5}%)`;
                         
-                        // Draw each face as a filled rectangle
-                        switch(face) {
-                            case 0: // Front
-                                ctx.fillRect(-cubeSize/2, -cubeSize/2, cubeSize, cubeSize);
-                                break;
-                            case 1: // Back (offset to show it's behind)
-                                ctx.fillRect(-cubeSize/2 + 5, -cubeSize/2 + 5, cubeSize, cubeSize);
-                                break;
-                            case 2: // Top
-                                ctx.fillRect(-cubeSize/2, -cubeSize - 5, cubeSize, cubeSize);
-                                break;
-                            case 3: // Bottom
-                                ctx.fillRect(-cubeSize/2, cubeSize/2 + 5, cubeSize, cubeSize);
-                                break;
-                            case 4: // Left
-                                ctx.fillRect(-cubeSize - 5, -cubeSize/2, cubeSize, cubeSize);
-                                break;
-                            case 5: // Right
-                                ctx.fillRect(cubeSize/2 + 5, -cubeSize/2, cubeSize, cubeSize);
-                                break;
-                        }
+                        // Draw each face with perspective
+                        const offset = face * 3;
+                        ctx.fillRect(-cubeSize/2 + offset, -cubeSize/2 + offset, cubeSize, cubeSize);
                         
                         ctx.restore();
                     }
                 }
                 
-                // Layer 2: Complex particle system with full rendering
-                const particleCount = complexity * 500;
-                for (let i = 0; i < particleCount; i++) {
-                    const angle = A + i * 0.01;
-                    const radius = 50 + Math.sin(angle * 2) * 30;
+                // Layer 3: Complex mathematical patterns
+                const patternDetail = Math.min(amount * 20, 500);
+                for (let i = 0; i < patternDetail; i++) {
+                    const angle = A + i * 0.1;
+                    const radius = 50 + Math.sin(angle * 3) * 40;
                     const x = gpuCanvas.width / 2 + Math.cos(angle) * radius;
                     const y = gpuCanvas.height / 2 + Math.sin(angle) * radius;
                     
-                    // Draw each particle with multiple layers to increase GPU load
-                    for (let layer = 0; layer < 3; layer++) {
-                        const size = 2 + layer + Math.sin(angle + layer) * 1;
-                        ctx.beginPath();
-                        ctx.arc(x + layer * 2, y + layer * 2, size, 0, Math.PI * 2);
-                        ctx.fillStyle = `hsla(${(i * 3 + A * 100) % 360}, 100%, 60%, ${0.8 - layer * 0.2})`;
-                        ctx.fill();
-                    }
-                }
-                
-                // Layer 3: Multiple rotating complex shapes with gradients
-                for (let shape = 0; shape < complexity * 3; shape++) {
-                    const shapeX = gpuCanvas.width / 4 + Math.cos(A * 0.7 + shape) * 150;
-                    const shapeY = gpuCanvas.height * 3/4 + Math.sin(A * 0.5 + shape) * 100;
-                    
-                    ctx.save();
-                    ctx.translate(shapeX, shapeY);
-                    ctx.rotate(A + shape * 0.4);
-                    
-                    // Create complex gradient for each shape
-                    const gradient = ctx.createRadialGradient(0, 0, 5, 0, 0, 25);
-                    gradient.addColorStop(0, `hsl(${(shape * 40 + A * 30) % 360}, 100%, 70%)`);
-                    gradient.addColorStop(1, `hsl(${(shape * 40 + 180 + A * 30) % 360}, 100%, 30%)`);
-                    
-                    // Draw complex polygon with many points
+                    // Draw complex shape with multiple points
                     ctx.beginPath();
-                    const sides = 8 + shape % 5;
-                    for (let i = 0; i < sides; i++) {
-                        const angle = (i * 2 * Math.PI) / sides;
-                        const radius = 20 + Math.sin(A + i) * 5;
-                        const x = Math.cos(angle) * radius;
-                        const y = Math.sin(angle) * radius;
-                        if (i === 0) {
-                            ctx.moveTo(x, y);
-                        } else {
-                            ctx.lineTo(x, y);
-                        }
+                    const points = 8;
+                    for (let p = 0; p < points; p++) {
+                        const pointAngle = angle + (p * 2 * Math.PI) / points;
+                        const pointRadius = 10 + Math.sin(A * 2 + p) * 5;
+                        const px = x + Math.cos(pointAngle) * pointRadius;
+                        const py = y + Math.sin(pointAngle) * pointRadius;
+                        
+                        if (p === 0) ctx.moveTo(px, py);
+                        else ctx.lineTo(px, py);
                     }
                     ctx.closePath();
+                    
+                    const gradient = ctx.createRadialGradient(x, y, 0, x, y, 15);
+                    gradient.addColorStop(0, `hsla(${(i * 5 + A * 30) % 360}, 100%, 70%, 0.8)`);
+                    gradient.addColorStop(1, `hsla(${(i * 5 + 180 + A * 30) % 360}, 100%, 30%, 0.4)`);
+                    
                     ctx.fillStyle = gradient;
                     ctx.fill();
-                    ctx.strokeStyle = 'white';
-                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = `hsl(${(i * 5 + A * 30) % 360}, 100%, 50%)`;
+                    ctx.lineWidth = 1;
                     ctx.stroke();
-                    
-                    ctx.restore();
                 }
                 
-                // Layer 4: Background grid that's always fully rendered
-                const gridSize = 20;
-                for (let x = 0; x < gpuCanvas.width; x += gridSize) {
-                    for (let y = 0; y < gpuCanvas.height; y += gridSize) {
-                        ctx.strokeStyle = `hsla(${(x + y + A * 100) % 360}, 50%, 50%, 0.3)`;
-                        ctx.lineWidth = 1;
-                        ctx.strokeRect(x, y, gridSize, gridSize);
+                // Layer 4: Real-time physics calculations
+                if (amount > 5) {
+                    // Additional physics-based elements for high amounts
+                    for (let i = 0; i < Math.min(amount * 10, 200); i++) {
+                        const springX = gpuCanvas.width / 2;
+                        const springY = gpuCanvas.height / 2;
+                        const springLength = 50 + Math.sin(A + i) * 20;
+                        const angle = A * 2 + i * 0.2;
+                        
+                        const endX = springX + Math.cos(angle) * springLength;
+                        const endY = springY + Math.sin(angle) * springLength;
+                        
+                        // Draw spring with physics simulation
+                        ctx.beginPath();
+                        ctx.moveTo(springX, springY);
+                        
+                        // Simulate spring coils
+                        const coils = 8;
+                        for (let coil = 1; coil <= coils; coil++) {
+                            const coilX = springX + (endX - springX) * (coil / coils);
+                            const coilY = springY + (endY - springY) * (coil / coils);
+                            const coilOffset = Math.sin(coil * 2 + A * 5) * 5;
+                            const perpX = -(endY - springY);
+                            const perpY = endX - springX;
+                            const length = Math.sqrt(perpX * perpX + perpY * perpY);
+                            const normX = perpX / length;
+                            const normY = perpY / length;
+                            
+                            ctx.lineTo(
+                                coilX + normX * coilOffset,
+                                coilY + normY * coilOffset
+                            );
+                        }
+                        
+                        ctx.lineTo(endX, endY);
+                        ctx.strokeStyle = `hsl(${(i * 20 + A * 50) % 360}, 100%, 60%)`;
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
                     }
                 }
                 
@@ -493,13 +539,17 @@
             renderGPU();
         }
 
-        function renderDonutString(a, b) {
+        function renderDonutString(a, b, detailMultiplier = 1) {
             const z = new Array(1760).fill(0);
             const bArray = new Array(1760).fill(' ');
             let output = '';
             
-            for (let j = 0; j < 6.28; j += 0.07) {
-                for (let i = 0; i < 6.28; i += 0.02) {
+            // Increase detail based on multiplier
+            const stepJ = 0.07 / detailMultiplier;
+            const stepI = 0.02 / detailMultiplier;
+            
+            for (let j = 0; j < 6.28; j += stepJ) {
+                for (let i = 0; i < 6.28; i += stepI) {
                     const c = Math.sin(i);
                     const d = Math.cos(j);
                     const e = Math.sin(a);
