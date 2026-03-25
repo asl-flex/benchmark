@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Windows Error</title>
+
+<style>
+html, body {
+    overflow: hidden;
+    height: 100%;
+}
+body {
+    font-family: Calibri, Candara, Segoe, "Segoe UI", Optima, Arial, sans-serif;
+    background: #3973aa;
+    color: #fefeff;
+    height: 100vh;
+    margin: 0;
+}
+
+#page {
+    display: table;
+    height: 100%;
+    margin: 0 auto;
+    margin-top: -10px;
+    width: 70%;
+    font-size: 1.9vw;
+}
+
+#container {
+    display: table-cell;
+    vertical-align: middle;
+}
+
+h1, h2, h3, h4, h5 {
+    font-weight: 300;
+    margin: 25px 0;
+}
+
+h1 {
+    font-size: 6.5em;
+    margin-bottom: 10px;
+}
+
+h2 {
+    font-size: 1.5em;
+}
+
+h4 {
+    font-size: 1.4em;
+    line-height: 1.5em;
+}
+
+h5 {
+    font-size: 1.3em;
+}
+
+#details {
+    display: flex;
+    flex-flow: row;
+    padding-top: 10px;
+}
+
+#image {
+    background: white;
+    padding: 5px;
+}
+
+#image img {
+    width: 9.8em;
+    height: 9.8em;
+}
+
+#stopcode {
+    padding-left: 10px;
+}
+
+@media (min-width: 840px) {
+    #page {
+        font-size: 140%;
+        width: 800px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div id="page">
+  <div id="container">
+    <h1>:(</h1>
+
+    <h2>Your PC ran into a problem and we do absolutely nothing, we are blocking your computer.  
+    enjoy your chai because.</h2>
+
+    <h2>
+      Deleting Windows... <span id="percentage">0</span>% complete
+    </h2>
+
+    <h2>please don't turn off your pc, it would damage your processor</h2>
+
+    <div id="details">
+      <div id="qr">
+        <div id="image">
+          <img src="http://xontab.com/experiments/Javascript/BSOD/qr.png">
+        </div>
+      </div>
+
+      <div id="stopcode">
+        <h4>scan this qr code to install linux automatically</h4>
+        <h5>happy april fool <br>type <b>aarav</b> to exit fullscreen</h5>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let percentageElement = document.getElementById("percentage");
+let percentage = 0;
+
+// Progress simulation
+function process() {
+  percentage += Math.floor(1);
+
+
+  percentageElement.innerText = percentage;
+
+  if (percentage < 100) {
+    setTimeout(process, Math.random() * 500 + 500);
+  }
+}
+process();
+
+// Fullscreen on click (browser safe)
+document.addEventListener("click", () => {
+  document.documentElement.requestFullscreen().catch(()=>{});
+});
+
+// Secret exit code typing
+let typed = "";
+
+document.addEventListener("keydown", (e) => {
+  typed += e.key.toLowerCase();
+
+  if (typed.includes("aarav")) {
+    exitPrank();
+  }
+
+  // keep string short
+  if (typed.length > 20) typed = typed.slice(-20);
+});
+
+// Exit function
+function exitPrank() {
+  if (document.fullscreenElement) {
+    document.exitFullscreen();
+  }
+  alert("😆 GOT YOU! Happy April Fool!");
+}
+
+// Optional: block some keys (light trolling)
+document.addEventListener("keydown", function(e) {
+  if (e.key === "F11") e.preventDefault();
+});
+</script>
+
+</body>
+</html>
+```
